@@ -12,6 +12,9 @@ npm run dev
 ```
 
 Open **http://127.0.0.1:18080/** (port 18080 so we do not collide with other `:8080` ADB forwards).
+On the LAN: **http://192.168.1.184:18080/** (survives `adb` reverse dropping).
+
+If you only see a dark grid and no chrome, the old casefile persist crashed boot. Reload once (storage key is now `spammeraegis-casefile-v2`), or tap **Reset casefile and reload** if an error card appears.
 
 Expected on first load: sample case **Repeat Knock**.
 

@@ -7,6 +7,7 @@ import { detectAlts } from "./detect.ts";
 import { parseHandles, scoreLiveProfile } from "./live.ts";
 import { APP_RELEASE, REQUIREMENTS } from "./release.ts";
 import type { Casefile } from "./types.ts";
+import { normalizeCasefile } from "./types.ts";
 
 describe("similarity", () => {
   it("stems numbered and reborn handles to the same root", () => {
@@ -174,6 +175,16 @@ describe("alpha detect + live", () => {
     assert.ok(got.includes("yellow_mocker"));
     assert.ok(got.includes("id:91003"));
     assert.ok(got.includes("id:10001"));
+  });
+});
+
+describe("normalizeCasefile", () => {
+  it("turns garbage persist payloads into an empty case", () => {
+    const cf = normalizeCasefile({ accounts: null, alerts: undefined });
+    assert.deepEqual(cf.alerts, []);
+    assert.deepEqual(cf.relations, []);
+    assert.equal(Object.keys(cf.accounts).length, 0);
+    assert.doesNotThrow(() => detectAlts(cf));
   });
 });
 

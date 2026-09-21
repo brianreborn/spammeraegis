@@ -16,6 +16,16 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      window.addEventListener("error", function (e) {
+        var root = document.getElementById("app");
+        if (!root || root.childElementCount) return;
+        root.innerHTML =
+          '<pre style="padding:16px;color:#c45c4a;white-space:pre-wrap">' +
+          String((e.error && e.error.stack) || e.message) +
+          "</pre>";
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

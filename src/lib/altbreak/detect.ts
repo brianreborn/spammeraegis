@@ -83,11 +83,13 @@ function followScore(
 }
 
 function blockScore(a: Account, b: Account): Evidence | null {
-  const shared = a.blockedIn.filter((x) => b.blockedIn.includes(x));
+  const aBlocks = a.blockedIn ?? [];
+  const bBlocks = b.blockedIn ?? [];
+  const shared = aBlocks.filter((x) => bBlocks.includes(x));
   if (shared.length >= 2) {
     return { kind: "blocks", detail: `Blocked in ${shared.length} shared archives`, weight: 24 };
   }
-  if (shared.length === 1 && (a.blockedIn.length || b.blockedIn.length)) {
+  if (shared.length === 1 && (aBlocks.length || bBlocks.length)) {
     return { kind: "blocks", detail: `Co-blocked in the same archive`, weight: 8 };
   }
   return null;
@@ -96,7 +98,7 @@ function blockScore(a: Account, b: Account): Evidence | null {
 function watchScore(a: Account, b: Account, relations: Relation[], ownerIds: Set<string>): Evidence | null {
   const aWatches = relations.some((r) => r.type === "follow" && r.source === a.id && ownerIds.has(r.target));
   const bWatches = relations.some((r) => r.type === "follow" && r.source === b.id && ownerIds.has(r.target));
-  if (aWatches && bWatches && (a.blockedIn.length || b.blockedIn.length)) {
+  if (aWatches && bWatches && ((a.blockedIn?.length ?? 0) || (b.blockedIn?.length ?? 0))) {
     return { kind: "watch", detail: "Both still follow a case owner after blocks", weight: 10 };
   }
   return null;
@@ -145,10 +147,11 @@ function find(parent: Map<string, string>, x: string): string {
 }
 
 export function detectAlts(cf: Casefile): { clusters: AltCluster[]; alerts: Alert[] } {
+  if (!cf?.accounts) return { clusters: [], alerts: [] };
   const accounts = Object.values(cf.accounts);
-  const followMap = followsOf(cf.relations);
+  const followMap = followsOf(cf.relations ?? []);
   const ownerIds = new Set(
-    cf.archives.map((a) => a.accountId).filter((id): id is string => Boolean(id)),
+    (cf.archives ?? []).map((a) => a.accountId).filter((id): id is string => Boolean(id)),
   );
   const pairs: PairHit[] = [];
   for (let i = 0; i < accounts.length; i++) {

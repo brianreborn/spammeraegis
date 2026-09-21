@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Account, Alert, AltCluster, Casefile, QueueStatus } from "@/lib/altbreak/types";
-import { emptyCasefile } from "@/lib/altbreak/types";
+import { emptyCasefile, normalizeCasefile } from "@/lib/altbreak/types";
 import { detectAlts, applyBatchFlags } from "@/lib/altbreak/detect";
 import { buildDemoCase } from "@/lib/altbreak/demo";
 import { parseArchiveBuffer, parseLooseFile } from "@/lib/altbreak/parse-zip";
@@ -62,10 +62,16 @@ function mergeAccount(into: Account, extra: Account): Account {
 }
 
 function withDetect(cf: Casefile): Pick<Store, "cf" | "clusters"> {
-  const { clusters, alerts } = detectAlts(cf);
-  const priorRead = new Set(cf.alerts.filter((a) => a.read).map((a) => a.id));
-  const mergedAlerts: Alert[] = alerts.map((a) => ({ ...a, read: priorRead.has(a.id) }));
-  return { cf: { ...cf, alerts: mergedAlerts }, clusters };
+  const safe = normalizeCasefile(cf);
+  try {
+    const { clusters, alerts } = detectAlts(safe);
+    const priorRead = new Set((safe.alerts ?? []).filter((a) => a.read).map((a) => a.id));
+    const mergedAlerts: Alert[] = alerts.map((a) => ({ ...a, read: priorRead.has(a.id) }));
+    return { cf: { ...safe, alerts: mergedAlerts }, clusters };
+  } catch (err) {
+    console.error("detectAlts failed; keeping case without clusters", err);
+    return { cf: safe, clusters: [] };
+  }
 }
 
 export const useCasefile = create<Store>()(
@@ -340,7 +346,7 @@ export const useCasefile = create<Store>()(
       },
     }),
     {
-      name: "spammeraegis-casefile",
+      name: "spammeraegis-casefile-v2",
       storage: createJSONStorage(() => {
         try {
           const next = localStorage.getItem("spammeraegis-casefile");
@@ -351,8 +357,20 @@ export const useCasefile = create<Store>()(
         }
         return localStorage;
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) Object.assign(state, withDetect(state.cf));
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<Store>;
+        const cf = normalizeCasefile(p.cf ?? current.cf);
+        return { ...current, ...p, cf };
+      },
+      onRehydrateStorage: () => (state, error) => {
+        if (error) console.error("casefile rehydrate failed", error);
+        if (!state) return;
+        try {
+          Object.assign(state, withDetect(normalizeCasefile(state.cf)));
+        } catch (err) {
+          console.error(err);
+          Object.assign(state, withDetect(emptyCasefile()));
+        }
       },
     },
   ),
