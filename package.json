@@ -1,0 +1,36 @@
+{
+  "name": "spammeraegis",
+  "private": true,
+  "version": "0.1.0-alpha",
+  "type": "module",
+  "description": "Local-first X archive forensics desk. Companion to twitter-forensics.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 8080",
+    "test": "node --experimental-strip-types --test src/lib/altbreak/beta.test.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.1.2",
+    "@tanstack/react-router": "^1.120.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.511.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sonner": "^2.0.3",
+    "tailwind-merge": "^3.2.0",
+    "zod": "^3.24.4",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.4"
+  }
+}

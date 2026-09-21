@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Altbreak field kit",
+  "version": "1.0.0",
+  "description": "Capture the open X profile into Altbreak. Local storage only.",
+  "icons": { "48": "icon.svg", "128": "icon.svg" },
+  "action": {
+    "default_title": "Altbreak capture",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "altbreak@local",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": { "required": ["none"] }
+    },
+    "gecko_android": {}
+  }
+}
