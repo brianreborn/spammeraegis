@@ -15,7 +15,13 @@ Unsigned `.xpi` for **standard Firefox**:
 
 It unloads when Firefox restarts. Permanent install needs Mozilla signing. GrapheneOS Vanadium has no extensions — use the desk plus the bookmarklet.
 
-Source for the add-on is in [`extension/`](extension/).
+Source for the add-on is in [`extension/`](extension/). Pack an unsigned XPI from that folder (files at zip root, not nested):
+
+```
+node scripts/pack-xpi.mjs
+```
+
+writes `dist/spammeraegis-field-kit-0.1.0.xpi`. The desk Download button packs the same `extension/` sources in-browser.
 
 ## What this cut ships
 
