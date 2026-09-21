@@ -1,5 +1,5 @@
-import type { Casefile } from "./types";
-import { emptyCasefile } from "./types";
+import type { Casefile } from "./types.ts";
+import { emptyCasefile } from "./types.ts";
 
 export function looksLikeCasefile(value: unknown): value is Casefile {
   if (!value || typeof value !== "object") return false;

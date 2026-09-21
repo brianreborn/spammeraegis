@@ -157,4 +157,84 @@ export function scoreLiveProfile(profile: LiveProfile, cf: Casefile): Pick<LiveH
       flags.push({
         code: "already_blocked",
         label: "Already blocked",
-... 
+        detail: `Already on ${other.blockedIn.length || other.mutedIn.length} archive list(s)`,
+        weight: 12,
+      });
+      bump(other.id, 12);
+      continue;
+    }
+    if (other.username) {
+      const oh = other.username.toLowerCase();
+      const os = stemHandle(oh);
+      if (os && stem && os === stem && os.length >= 4) {
+        flags.push({
+          code: "handle_stem",
+          label: "Handle stem",
+          detail: `Same stem as @${other.username}`,
+          weight: 38,
+        });
+        bump(other.id, 38);
+      } else if (jaroWinkler(handle, oh) >= 0.92 || levenshtein(handle, oh) <= 2) {
+        flags.push({
+          code: "handle_near",
+          label: "Near handle",
+          detail: `Close to @${other.username}`,
+          weight: 28,
+        });
+        bump(other.id, 28);
+      }
+    }
+    if (other.displayName) {
+      const od = other.displayName.toLowerCase().replace(/\s+/g, " ").trim();
+      if (od && display && od === display) {
+        flags.push({
+          code: "same_display",
+          label: "Same display name",
+          detail: `Matches ${other.displayName}`,
+          weight: 18,
+        });
+        bump(other.id, 18);
+      }
+    }
+    if (other.bio && bioTok.length) {
+      const ja = jaccard(bioTok, tokenize(other.bio));
+      if (ja >= 0.45) {
+        flags.push({
+          code: "bio_overlap",
+          label: "Bio overlap",
+          detail: `${(ja * 100).toFixed(0)}% vs @${other.username ?? other.id}`,
+          weight: 18,
+        });
+        bump(other.id, 18);
+      }
+    }
+  }
+
+  const score = flags.reduce((n, f) => n + f.weight, 0);
+  const nearIds = [...near.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => id);
+  return { flags, score, nearIds };
+}
+
+export function hitFromProfile(
+  query: string,
+  profile: LiveProfile,
+  cf: Casefile,
+  source: LiveHit["source"],
+  extra?: { following?: LiveNeighbor[]; statuses?: LiveStatus[] },
+): LiveHit {
+  const scored = scoreLiveProfile(profile, cf);
+  return {
+    query,
+    ok: true,
+    source,
+    profile,
+    following: extra?.following,
+    statuses: extra?.statuses,
+    flags: scored.flags,
+    score: scored.score,
+    nearIds: scored.nearIds,
+  };
+}
+ 

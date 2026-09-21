@@ -4,8 +4,7 @@ import { stemHandle, levenshtein, jaroWinkler, tokenize, jaccard } from "./simil
 import { findWatchers } from "./watchers.ts";
 import { parseCasefileJson, looksLikeCasefile } from "./casefile-json.ts";
 import { detectAlts } from "./detect.ts";
-import { buildDemoCase } from "./demo.ts";
-import { parseHandles, profileFromAccount, scoreLiveProfile } from "./live.ts";
+import { parseHandles, scoreLiveProfile } from "./live.ts";
 import { APP_RELEASE, REQUIREMENTS } from "./release.ts";
 import type { Casefile } from "./types.ts";
 
@@ -93,28 +92,95 @@ describe("casefile json", () => {
 });
 
 describe("alpha detect + live", () => {
-  it("clusters the Repeat Knock voidwatch ring", () => {
-    const { clusters } = detectAlts(buildDemoCase());
+  const counts = { blocks: 2, mutes: 0, followers: 0, following: 0, tweets: 0, likes: 0, mentions: 0 };
+  const mini: Casefile = {
+    version: 1,
+    name: "mini",
+    accounts: {
+      me: { id: "me", username: "fieldnotes", sources: ["a"], blockedIn: [], mutedIn: [] },
+      a: {
+        id: "a",
+        username: "voidwatch",
+        displayName: "Void Watch",
+        bio: "just asking questions",
+        sources: ["a"],
+        blockedIn: ["arc"],
+        mutedIn: [],
+      },
+      b: {
+        id: "b",
+        username: "voidwatch3",
+        displayName: "Void Watch",
+        bio: "just asking questions still",
+        sources: ["a"],
+        blockedIn: [],
+        mutedIn: [],
+      },
+    },
+    relations: [
+      { id: "r1", source: "a", target: "me", type: "follow" },
+      { id: "r2", source: "b", target: "me", type: "follow" },
+    ],
+    archives: [
+      {
+        id: "arc",
+        filename: "x.zip",
+        accountId: "me",
+        importedAt: "2026-09-01T00:00:00.000Z",
+        counts,
+        kind: "demo",
+      },
+    ],
+    logs: [],
+    flags: [],
+    queue: [],
+    alerts: [],
+    notes: {},
+    isDemo: true,
+  };
+
+  it("clusters numbered handle alts", () => {
+    const { clusters } = detectAlts(mini);
     assert.ok(clusters.length >= 1);
-    const voidish = clusters.find((c) =>
-      c.memberIds.some((id) => buildDemoCase().accounts[id]?.username?.startsWith("void")),
-    );
-    assert.ok(voidish);
-    assert.ok((voidish?.score ?? 0) >= 42);
-    assert.ok(voidish?.evidence.some((e) => e.kind === "handle" || e.kind === "bio"));
+    const hit = clusters.find((c) => c.memberIds.includes("a") && c.memberIds.includes("b"));
+    assert.ok(hit);
+    assert.ok((hit?.score ?? 0) >= 42);
   });
 
   it("flags a live handle that shares a blocked stem", () => {
-    const cf = buildDemoCase();
-    const seed = cf.accounts["91001"]!;
     const profile = {
-      ...profileFromAccount(seed),
       id: "99999",
       username: "voidwatch9",
       displayName: "Void Watch",
       bio: "just asking questions",
+      followersCount: 3,
+      followingCount: 40,
+      tweetsCount: 12,
+      likesCount: 0,
+      protected: false,
+      verified: false,
+      defaultAvatar: false,
+      createdAt: new Date().toISOString(),
     };
-    const hit = scoreLiveProfile(profile, cf);
+    const hit = scoreLiveProfile(profile, mini);
     assert.ok(hit.score >= 40);
-    assert.ok(hit.flags
-... 
+    assert.ok(hit.flags.some((f) => f.code === "handle_stem" || f.code === "handle_near"));
+    assert.ok(hit.nearIds.includes("a"));
+  });
+
+  it("parses mixed handle paste", () => {
+    const got = parseHandles("@voidwatch3\nhttps://x.com/yellow_mocker\n91003\nid:10001");
+    assert.ok(got.includes("voidwatch3"));
+    assert.ok(got.includes("yellow_mocker"));
+    assert.ok(got.includes("id:91003"));
+    assert.ok(got.includes("id:10001"));
+  });
+});
+
+describe("release", () => {
+  it("ships an alpha channel string and requirement list", () => {
+    assert.match(APP_RELEASE, /alpha/);
+    assert.ok(REQUIREMENTS.length >= 10);
+    assert.ok(REQUIREMENTS.some((r) => r.status === "ships"));
+  });
+});

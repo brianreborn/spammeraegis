@@ -1,4 +1,4 @@
-import type { Casefile } from "./types";
+import type { Casefile } from "./types.ts";
 
 export type Watcher = {
   accountId: string;

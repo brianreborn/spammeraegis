@@ -105,5 +105,15 @@ export function AboutView() {
             <div className="font-mono text-xs text-subtle">
               {c.version} · {c.date}
             </div>
-            <ul className="mt-2 flex flex-col gap-1 text-sm
-... 
+            <ul className="mt-2 flex flex-col gap-1 text-sm text-muted">
+              {c.items.map((item) => (
+                <li key={item}>· {item}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+ 

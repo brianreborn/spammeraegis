@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Ban,
+  CircleHelp,
   Crosshair,
   Download,
   FolderInput,
@@ -11,7 +12,8 @@ import {
   ScrollText,
   Shield,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, handleOf } from "@/lib/utils";
+import { APP_RELEASE } from "@/lib/altbreak/release";
 import { useCasefile } from "@/store/casefile";
 
 const NAV = [
@@ -24,15 +26,45 @@ const NAV = [
   { id: "capture", label: "Capture", icon: Crosshair },
   { id: "export", label: "Export", icon: Download },
   { id: "log", label: "Log", icon: ScrollText },
+  { id: "about", label: "Alpha", icon: CircleHelp },
 ] as const;
+
+const KEY_VIEWS: Record<string, (typeof NAV)[number]["id"]> = {
+  d: "desk",
+  i: "import",
+  g: "graph",
+  a: "alts",
+  c: "crawl",
+  q: "queue",
+  p: "capture",
+  e: "export",
+  l: "log",
+  "?": "about",
+};
 
 export function AppShell({ children }: { children: ReactNode }) {
   const view = useCasefile((s) => s.view);
   const setView = useCasefile((s) => s.setView);
   const cf = useCasefile((s) => s.cf);
   const clusters = useCasefile((s) => s.clusters);
+  const query = useCasefile((s) => s.query);
+  const setQuery = useCasefile((s) => s.setQuery);
+  const select = useCasefile((s) => s.select);
   const unread = cf.alerts.filter((a) => !a.read).length;
   const openQ = cf.queue.filter((q) => q.status !== "done").length;
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const hits = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return Object.values(cf.accounts)
+      .filter((acc) => {
+        const handle = (acc.username ?? "").toLowerCase();
+        const name = (acc.displayName ?? "").toLowerCase();
+        return handle.includes(q) || name.includes(q) || acc.id.includes(q);
+      })
+      .slice(0, 8);
+  }, [cf.accounts, query]);
 
   useEffect(() => {
     const apply = () => {
@@ -59,6 +91,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("hashchange", apply);
   }, []);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "/" && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (e.key === "Escape") setOpen(false);
+      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+      if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const next = KEY_VIEWS[e.key];
+        if (next) {
+          e.preventDefault();
+          useCasefile.getState().setView(next);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="border-b border-border bg-bg/90 backdrop-blur-sm">
@@ -81,6 +133,38 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
           </button>
           <div className="hidden items-center gap-2 sm:flex">
+            <div className="relative">
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setOpen(true);
+                }}
+                onFocus={() => setOpen(true)}
+                placeholder="Search handles"
+                className="h-9 w-44 rounded-md border border-border bg-surface px-2 font-mono text-xs"
+              />
+              {open && hits.length > 0 && (
+                <ul className="absolute right-0 z-20 mt-1 w-64 rounded-md border border-border bg-surface p-1">
+                  {hits.map((acc) => (
+                    <li key={acc.id}>
+                      <button
+                        type="button"
+                        className="flex w-full rounded-sm px-2 py-1.5 text-left text-xs hover:bg-raised"
+                        onClick={() => {
+                          select(acc.id);
+                          setView("graph");
+                          setOpen(false);
+                        }}
+                      >
+                        {handleOf(acc)}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <Meta k="accounts" v={Object.keys(cf.accounts).length} />
             <Meta k="alts" v={clusters.length} />
             <Meta k="queue" v={openQ} hot={openQ > 0} />
