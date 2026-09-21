@@ -122,5 +122,187 @@ async function parseXArchiveZip(
     const path = findFile(files, step.file);
     if (!path) continue;
     try {
+      const ids = parseIdList(await files[path]!.async("string"), step.nested);
+      counts[step.count] = ids.length;
+      for (const id of ids) {
+        const acc = accounts.get(id) ?? emptyAccount(id, archiveId);
+        if (step.rel === "block") acc.blockedIn = Array.from(new Set([...acc.blockedIn, archiveId]));
+        if (step.rel === "mute") acc.mutedIn = Array.from(new Set([...acc.mutedIn, archiveId]));
+        accounts.set(id, acc);
+        if (owner) {
+          if (step.rel === "block" || step.rel === "mute") {
+            relations.push({ id: uid("rel"), source: owner.id, target: id, type: step.rel, archiveId });
+          } else if (step.count === "followers") {
+            relations.push({ id: uid("rel"), source: id, target: owner.id, type: "follow", archiveId });
+          } else {
+            relations.push({ id: uid("rel"), source: owner.id, target: id, type: "follow", archiveId });
+          }
+        }
+      }
+    } catch (err) {
+      warnings.push(`Could not parse ${step.file}: ${err instanceof Error ? err.message : "error"}`);
+    }
+  }
 
-... 
+  const tweetPath = findFile(files, "tweet.js") ?? findFile(files, "tweets.js");
+  if (tweetPath) {
+    try {
+      const hits = parseTweetInteractions(await files[tweetPath].async("string"), owner?.id);
+      counts.tweets = hits.filter((h) => h.kind === "reply").length;
+      counts.mentions = hits.filter((h) => h.kind === "mention").length;
+      for (const hit of hits) {
+        if (!hit.targetId || !owner) continue;
+        const acc = accounts.get(hit.targetId) ?? emptyAccount(hit.targetId, archiveId);
+        if (hit.targetUsername) acc.username = acc.username ?? hit.targetUsername;
+        accounts.set(hit.targetId, acc);
+        relations.push({
+          id: uid("rel"),
+          source: owner.id,
+          target: hit.targetId,
+          type: hit.kind === "reply" ? "reply" : "mention",
+          archiveId,
+        });
+      }
+    } catch (err) {
+      warnings.push(`Could not parse tweets: ${err instanceof Error ? err.message : "error"}`);
+    }
+  }
+
+  return {
+    archive: {
+      id: archiveId,
+      filename,
+      date,
+      accountId: owner?.id,
+      username: owner?.username,
+      displayName: owner?.displayName,
+      bio: owner?.bio,
+      importedAt: new Date().toISOString(),
+      counts,
+      kind: "x-archive",
+    },
+    accounts: [...accounts.values()],
+    relations,
+    warnings,
+  };
+}
+
+async function parseForensicsZip(
+  files: Record<string, { async: (t: "string") => Promise<string> }>,
+  filename: string,
+): Promise<ImportResult> {
+  const archiveId = uid("arc");
+  const warnings: string[] = [];
+  const accounts = new Map<string, Account>();
+  const relations: Relation[] = [];
+  const counts = { ...EMPTY_COUNTS };
+  const paths = Object.keys(files);
+  const userPath = paths.find((p) => /(^|\/)@[^/]+\/user\.json$/i.test(p));
+  let owner: ReturnType<typeof userFromFragment> | null = null;
+  if (userPath) {
+    const rows = parseNdjson(await files[userPath]!.async("string"));
+    owner = rows.length ? userFromFragment(rows[0]!) : null;
+    if (owner) accounts.set(owner.id, accountFromForensics(owner, archiveId));
+  }
+  for (const kind of ["followers", "following"] as const) {
+    const path = paths.find((p) => new RegExp(`(^|/)@[^/]+/${kind}\\.json$`, "i").test(p));
+    if (!path || !owner) continue;
+    const others = parseNdjson(await files[path]!.async("string"))
+      .map(userFromFragment)
+      .filter((u): u is ForensicsUser => Boolean(u));
+    if (kind === "followers") counts.followers = others.length;
+    else counts.following = others.length;
+    for (const u of others) accounts.set(u.id, accountFromForensics(u, archiveId));
+    relations.push(...followRelations(owner, others, kind, archiveId));
+  }
+  return {
+    archive: {
+      id: archiveId,
+      filename,
+      date: archiveDateFromFilename(filename).date,
+      accountId: owner?.id,
+      username: owner?.username,
+      displayName: owner?.displayName,
+      importedAt: new Date().toISOString(),
+      counts,
+      kind: "forensics",
+    },
+    accounts: [...accounts.values()],
+    relations,
+    warnings,
+  };
+}
+
+export async function parseLooseFile(text: string, filename: string): Promise<ImportResult> {
+  const archiveId = uid("arc");
+  const warnings: string[] = [];
+  const lower = filename.toLowerCase();
+  if (lower.includes("block")) {
+    const ids = parseIdList(text, "blocking");
+    return {
+      archive: {
+        id: archiveId,
+        filename,
+        date: archiveDateFromFilename(filename).date,
+        importedAt: new Date().toISOString(),
+        counts: { ...EMPTY_COUNTS, blocks: ids.length },
+        kind: "ytd-file",
+      },
+      accounts: ids.map((id) => ({
+        ...emptyAccount(id, archiveId),
+        blockedIn: [archiveId],
+      })),
+      relations: [],
+      warnings,
+    };
+  }
+  if (lower.includes("mute")) {
+    const ids = parseIdList(text, "muting");
+    return {
+      archive: {
+        id: archiveId,
+        filename,
+        date: archiveDateFromFilename(filename).date,
+        importedAt: new Date().toISOString(),
+        counts: { ...EMPTY_COUNTS, mutes: ids.length },
+        kind: "ytd-file",
+      },
+      accounts: ids.map((id) => ({
+        ...emptyAccount(id, archiveId),
+        mutedIn: [archiveId],
+      })),
+      relations: [],
+      warnings,
+    };
+  }
+  const rows = parseNdjson(text);
+  if (rows.length) {
+    const users = rows.map(userFromFragment).filter((u): u is ForensicsUser => Boolean(u));
+    return {
+      archive: {
+        id: archiveId,
+        filename,
+        importedAt: new Date().toISOString(),
+        counts: { ...EMPTY_COUNTS },
+        kind: "forensics",
+      },
+      accounts: users.map((u) => accountFromForensics(u, archiveId)),
+      relations: [],
+      warnings,
+    };
+  }
+  warnings.push(`Unrecognized file ${filename}`);
+  return {
+    archive: {
+      id: archiveId,
+      filename,
+      importedAt: new Date().toISOString(),
+      counts: { ...EMPTY_COUNTS },
+      kind: "ytd-file",
+    },
+    accounts: [],
+    relations: [],
+    warnings,
+  };
+}
+ 

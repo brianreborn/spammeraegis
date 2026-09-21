@@ -109,5 +109,40 @@ export function blocklistText(cf: Casefile): string {
   }
   const lines = [...ids].map((id) => {
     const acc = cf.accounts[id]!;
-    return [acc.id, acc.username ?? "", a
-... 
+    return [acc.id, acc.username ?? "", acc.displayName ?? ""].join("\t");
+  });
+  return lines.join("\n");
+}
+
+export function caseJson(cf: Casefile): string {
+  return JSON.stringify({ ...cf, isDemo: false }, null, 2);
+}
+
+export function downloadGephiBundle(cf: Casefile): void {
+  downloadText("nodes.csv", gephiNodesCsv(cf), "text/csv");
+  downloadText("edges.csv", gephiEdgesCsv(cf), "text/csv");
+  downloadText("graph.gexf", gephiGexf(cf), "application/xml");
+}
+
+export async function downloadForensicsZip(cf: Casefile): Promise<void> {
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  const flagged = new Set(cf.flags.map((f) => f.accountId));
+  const ndjson = (rows: unknown[]) => rows.map((r) => JSON.stringify(r)).join("\n");
+  const users = Object.values(cf.accounts).map((acc) => ({
+    id: acc.id,
+    username: acc.username,
+    displayname: acc.displayName,
+    created: acc.createdAt,
+    followersCount: acc.followersCount,
+    flagged: flagged.has(acc.id),
+    blocked: acc.blockedIn.length > 0,
+  }));
+  zip.file("case.json", caseJson(cf));
+  zip.file("users.ndjson", ndjson(users));
+  zip.file("relations.ndjson", ndjson(cf.relations));
+  zip.file("log.ndjson", ndjson(cf.logs));
+  const blob = await zip.generateAsync({ type: "blob" });
+  downloadBlob("spammeraegis-forensics.zip", blob);
+}
+ 

@@ -128,5 +128,75 @@ export function buildDemoCase(): Casefile {
       blockedIn: [a2],
       createdAt: "2026-08-20",
       followersCount: 9,
-  
-... 
+      sources: [a2],
+    }),
+  ];
+
+  const owners = [
+    acc(owner, "fieldnotes", "Field Notes", "Public notes. Blocks are not a suggestion.", {
+      sources: [a1],
+      followersCount: 640,
+    }),
+    acc(ally, "watchdesk", "Watch Desk", "Ally archive. Shared the same knockers.", {
+      sources: [a2],
+      followersCount: 210,
+    }),
+  ];
+
+  const accounts: Record<string, Account> = {};
+  for (const a of [...owners, ...hubs, ...voidWatch, ...mockers]) accounts[a.id] = a;
+
+  const relations: Relation[] = [];
+  for (const v of voidWatch) {
+    relations.push(rel(v.id, owner, "follow", a1));
+    for (const h of hubs) relations.push(rel(v.id, h.id, "follow", a1));
+  }
+  for (const m of mockers) {
+    relations.push(rel(m.id, owner, "follow", a1));
+    relations.push(rel(m.id, hubs[0]!.id, "follow", a1));
+    relations.push(rel(m.id, hubs[1]!.id, "follow", a1));
+  }
+  for (const v of voidWatch.filter((x) => x.blockedIn.length)) {
+    relations.push(rel(owner, v.id, "block", v.blockedIn[0] ?? a1));
+  }
+
+  return {
+    version: 1,
+    name: "Repeat Knock",
+    accounts,
+    relations,
+    archives,
+    logs: [
+      {
+        id: "log_demo",
+        at: "2026-09-14T12:00:00.000Z",
+        kind: "import",
+        message: "Loaded Repeat Knock sample case.",
+      },
+    ],
+    flags: [],
+    queue: [],
+    alerts: [],
+    notes: {},
+    isDemo: true,
+  };
+}
+
+export async function buildSampleZip(): Promise<Blob> {
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  zip.file(
+    "data/account.js",
+    `window.YTD.account.part0 = ${JSON.stringify([{ account: { accountId: "10001", username: "fieldnotes", accountDisplayName: "Field Notes" } }])};`,
+  );
+  zip.file(
+    "data/block.js",
+    `window.YTD.block.part0 = ${JSON.stringify([{ blocking: { accountId: "91001" } }, { blocking: { accountId: "91002" } }])};`,
+  );
+  zip.file(
+    "data/following.js",
+    `window.YTD.following.part0 = ${JSON.stringify([{ following: { accountId: "88001" } }])};`,
+  );
+  return zip.generateAsync({ type: "blob" });
+}
+ 

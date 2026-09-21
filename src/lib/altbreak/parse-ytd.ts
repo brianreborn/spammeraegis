@@ -126,5 +126,15 @@ export function parseTweetInteractions(text: string, ownerId?: string): MentionH
         const name = str(rec.screen_name);
         if ((mid && mid !== ownerId) || name) {
           hits.push({ targetId: mid, targetUsername: name, kind: "mention" });
-   
-... 
+        }
+      }
+    }
+  }
+  return hits;
+}
+
+export function archiveDateFromFilename(filename: string): { date?: string } {
+  const m = filename.match(/(\d{4}-\d{2}-\d{2})/);
+  return { date: m?.[1] };
+}
+ 

@@ -129,5 +129,80 @@ export function GraphCanvas() {
           const dist = Math.hypot(dx, dy) || 0.01;
           const min = 28;
           if (dist < min) {
-            const f = ((min - dist) /
-... 
+            const f = ((min - dist) / min) * 0.6;
+            a.vx += (dx / dist) * f;
+            a.vy += (dy / dist) * f;
+            b.vx -= (dx / dist) * f;
+            b.vy -= (dy / dist) * f;
+          }
+        }
+      }
+      for (const e of edges) {
+        const dx = e.b.x - e.a.x;
+        const dy = e.b.y - e.a.y;
+        const dist = Math.hypot(dx, dy) || 0.01;
+        const rest = 90;
+        const f = (dist - rest) * 0.008;
+        e.a.vx += (dx / dist) * f;
+        e.a.vy += (dy / dist) * f;
+        e.b.vx -= (dx / dist) * f;
+        e.b.vy -= (dy / dist) * f;
+      }
+      for (const n of nodes) {
+        n.vx += -n.x * 0.002;
+        n.vy += -n.y * 0.002;
+        n.vx *= 0.82;
+        n.vy *= 0.82;
+        if (n !== drag) {
+          n.x += n.vx;
+          n.y += n.vy;
+        }
+      }
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      for (const e of edges) {
+        ctx.beginPath();
+        ctx.strokeStyle = e.type === "block" ? "#c45c4a" : e.type === "mute" ? "#8a8e96" : "#4a5a68";
+        ctx.globalAlpha = 0.55;
+        ctx.moveTo(e.a.x, e.a.y);
+        ctx.lineTo(e.b.x, e.b.y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.fillStyle = n.id === selectedId ? "#e8e6e3" : n.color;
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (hover) {
+        ctx.fillStyle = "#e8e6e3";
+        ctx.font = "12px ui-monospace, monospace";
+        ctx.fillText(hover.label, hover.x + 10, hover.y - 10);
+      }
+      ctx.restore();
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointerleave", onUp);
+    };
+  }, [cf, clusters, selectedId, select]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="block w-full touch-none"
+      role="img"
+      aria-label="Force-directed graph of follows and blocks. Tap a node to open the dossier."
+    />
+  );
+}
+ 

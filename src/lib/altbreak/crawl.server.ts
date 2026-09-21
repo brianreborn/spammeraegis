@@ -132,5 +132,32 @@ export async function fetchPublicUser(query: string, deep: boolean): Promise<Cra
     if (!profile) {
       return { query, ok: false, error: "No public profile (suspended, missing, or private to this lookup)." };
     }
-    let following: LiveNeighbor
-... 
+    let following: LiveNeighbor[] | undefined;
+    let statuses: LiveStatus[] | undefined;
+    if (deep) {
+      try {
+        following = usersFromList(await fxGet(`/2/following/${profile.username}`));
+      } catch {
+        following = [];
+      }
+      try {
+        statuses = statusesFromList(await fxGet(`/2/user/${profile.username}/status`));
+      } catch {
+        statuses = [];
+      }
+    }
+    return { query, ok: true, profile, following, statuses };
+  } catch (err) {
+    return { query, ok: false, error: err instanceof Error ? err.message : "lookup failed" };
+  }
+}
+
+export async function fetchPublicUsers(handles: string[], deep: boolean): Promise<CrawlFetch[]> {
+  const out: CrawlFetch[] = [];
+  for (const raw of handles) {
+    const q = raw.replace(/^id:/i, "");
+    out.push(await fetchPublicUser(q, deep));
+  }
+  return out;
+}
+ 
