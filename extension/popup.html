@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpammerAegis</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; font: 14px/1.45 system-ui, sans-serif; background: #0c0d10; color: #e6e4dc; width: 320px; }
+      main { padding: 14px; display: flex; flex-column; gap: 10px; }
+      h1 { margin: 0; font-size: 15px; }
+      p, pre { margin: 0; color: #8a8e96; font-size: 12px; }
+      pre { white-space: pre-wrap; background: #15171c; border: 1px solid rgb(230 228 220 / 0.12); padding: 8px; border-radius: 8px; color: #e6e4dc; }
+      button { height: 40px; border: 0; border-radius: 8px; background: #d8d4cb; color: #0c0d10; font-weight: 600; cursor: pointer; }
+      button.ghost { background: #1c1f26; color: #e6e4dc; border: 1px solid rgb(230 228 220 / 0.12); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>SpammerAegis 0.1.0-alpha</h1>
+      <p id="status">Reading this tab…</p>
+      <pre id="out">—</pre>
+      <button id="copy" type="button">Copy JSON</button>
+      <button id="open" class="ghost" type="button">Open desk with payload</button>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "SpammerAegis field kit",
+  "version": "0.1.0",
+  "description": "Capture the open X profile into SpammerAegis. Local storage only.",
+  "icons": { "48": "icon.svg", "128": "icon.svg" },
+  "action": {
+    "default_title": "SpammerAegis capture",
+    "default_popup": "popup.html",
+    "default_icon": { "48": "icon.svg" }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "spammeraegis@local",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": { "required": ["none"] }
+    },
+    "gecko_android": {}
+  }
+}
