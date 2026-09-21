@@ -1,20 +1,20 @@
-import type { Account, ArchiveMeta, ImportResult, Relation } from "./types";
-import { EMPTY_COUNTS } from "./types";
+import type { Account, ArchiveMeta, ImportResult, Relation } from "./types.ts";
+import { EMPTY_COUNTS } from "./types.ts";
 import {
   archiveDateFromFilename,
   parseAccountFile,
   parseIdList,
   parseProfileBio,
   parseTweetInteractions,
-} from "./parse-ytd";
+} from "./parse-ytd.ts";
 import {
   accountFromForensics,
   followRelations,
   parseNdjson,
   userFromFragment,
   type ForensicsUser,
-} from "./parse-forensics";
-import { uid } from "@/lib/utils";
+} from "./parse-forensics.ts";
+import { uid } from "../utils.ts";
 
 const YTD_STEPS = [
   { file: "block.js", nested: "blocking", rel: "block" as const, count: "blocks" as const },

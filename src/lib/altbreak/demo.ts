@@ -1,5 +1,5 @@
-import type { Account, ArchiveMeta, Casefile, Relation } from "./types";
-import { uid } from "@/lib/utils";
+import type { Account, ArchiveMeta, Casefile, Relation } from "./types.ts";
+import { uid } from "../utils.ts";
 
 function acc(
   id: string,
@@ -192,6 +192,14 @@ export async function buildSampleZip(): Promise<Blob> {
   zip.file(
     "data/block.js",
     `window.YTD.block.part0 = ${JSON.stringify([{ blocking: { accountId: "91001" } }, { blocking: { accountId: "91002" } }])};`,
+  );
+  zip.file(
+    "data/mute.js",
+    `window.YTD.mute.part0 = ${JSON.stringify([{ muting: { accountId: "92001" } }])};`,
+  );
+  zip.file(
+    "data/follower.js",
+    `window.YTD.follower.part0 = ${JSON.stringify([{ follower: { accountId: "91001" } }])};`,
   );
   zip.file(
     "data/following.js",

@@ -277,6 +277,15 @@ function ImportView() {
             .finally(() => setBusy(false));
         }}
       />
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+        className="flex min-h-32 w-full max-w-xl flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong bg-surface px-4 py-8 text-sm text-muted hover:bg-raised"
+      >
+        <Upload className="size-5" />
+        {busy ? "Importing…" : "Tap to choose ZIP / YTD / case JSON"}
+      </button>
       <Button onClick={() => inputRef.current?.click()} disabled={busy}>
         <Upload /> Choose files
       </Button>

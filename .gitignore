@@ -4,3 +4,4 @@ dist/
 *.log
 .vite/
 routeTree.gen.ts.bak
+uat-artifacts/

@@ -4,6 +4,16 @@ Local-first X / Twitter forensics desk. Import an official archive ZIP, live-che
 
 Companion to [twitter-forensics](https://github.com/brianreborn/twitter-forensics) and [twitter-archive-tools](https://github.com/brianreborn/twitter-archive-tools).
 
+## Run it (UAT)
+
+```
+npm install
+npm test
+npm run dev
+```
+
+Open http://127.0.0.1:18080/ — walkthrough in [`UAT.md`](UAT.md). Note 9 USB: `npm run uat:note9` (takes `$HOME/$ADBUUID` first).
+
 ## Field kit (Firefox)
 
 Unsigned `.xpi` for **standard Firefox**:

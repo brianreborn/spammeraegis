@@ -24,9 +24,12 @@
 }
 
 @layer base {
-  html, body, #root { min-height: 100%; }
+  html, body, #app { min-height: 100%; }
+  html { overflow-x: hidden; }
   body {
     margin: 0;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

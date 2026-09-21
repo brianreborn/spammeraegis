@@ -5,9 +5,9 @@
  * Fields observed in gephi-ingest.py: id, username, displayname, created, followersCount.
  */
 
-import type { Account, Relation } from "./types";
-import { nested, str } from "./parse-ytd";
-import { uid } from "@/lib/utils";
+import type { Account, Relation } from "./types.ts";
+import { nested, str } from "./parse-ytd.ts";
+import { uid } from "../utils.ts";
 
 export type ForensicsUser = {
   id: string;

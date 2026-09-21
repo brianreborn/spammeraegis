@@ -17,7 +17,7 @@ import { toast } from "sonner";
 export function CrawlView() {
   const cf = useCasefile((s) => s.cf);
   const ingestLive = useCasefile((s) => s.ingestLive);
-  const [text, setText] = useState("");
+  const [text, setText] = useState("grok");
   const [deep, setDeep] = useState(false);
   const [busy, setBusy] = useState(false);
   const [hits, setHits] = useState<LiveHit[]>([]);
