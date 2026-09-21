@@ -189,3 +189,48 @@ export function emptyCasefile(): Casefile {
     isDemo: false,
   };
 }
+
+/** Guard persisted / imported payloads so the desk cannot boot into a white screen. */
+export function normalizeCasefile(raw: unknown): Casefile {
+  const base = emptyCasefile();
+  if (!raw || typeof raw !== "object") return base;
+  const o = raw as Partial<Casefile>;
+  const accounts: Record<string, Account> = {};
+  const src = o.accounts && typeof o.accounts === "object" ? o.accounts : {};
+  for (const [id, acc] of Object.entries(src)) {
+    if (!acc || typeof acc !== "object") continue;
+    accounts[id] = {
+      id: acc.id || id,
+      username: acc.username,
+      displayName: acc.displayName,
+      bio: acc.bio,
+      createdAt: acc.createdAt,
+      followersCount: acc.followersCount,
+      followingCount: acc.followingCount,
+      tweetsCount: acc.tweetsCount,
+      likesCount: acc.likesCount,
+      protected: acc.protected,
+      verified: acc.verified,
+      avatarUrl: acc.avatarUrl,
+      website: acc.website,
+      location: acc.location,
+      sources: Array.isArray(acc.sources) ? acc.sources : [],
+      blockedIn: Array.isArray(acc.blockedIn) ? acc.blockedIn : [],
+      mutedIn: Array.isArray(acc.mutedIn) ? acc.mutedIn : [],
+      capturedAt: acc.capturedAt,
+    };
+  }
+  return {
+    version: 1,
+    name: typeof o.name === "string" && o.name.trim() ? o.name : base.name,
+    accounts,
+    relations: Array.isArray(o.relations) ? o.relations : [],
+    archives: Array.isArray(o.archives) ? o.archives : [],
+    logs: Array.isArray(o.logs) ? o.logs : [],
+    flags: Array.isArray(o.flags) ? o.flags : [],
+    queue: Array.isArray(o.queue) ? o.queue : [],
+    alerts: Array.isArray(o.alerts) ? o.alerts : [],
+    notes: o.notes && typeof o.notes === "object" ? o.notes : {},
+    isDemo: Boolean(o.isDemo),
+  };
+}

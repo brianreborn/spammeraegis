@@ -50,14 +50,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const query = useCasefile((s) => s.query);
   const setQuery = useCasefile((s) => s.setQuery);
   const select = useCasefile((s) => s.select);
-  const unread = cf.alerts.filter((a) => !a.read).length;
-  const openQ = cf.queue.filter((q) => q.status !== "done").length;
+  const unread = (cf.alerts ?? []).filter((a) => !a.read).length;
+  const openQ = (cf.queue ?? []).filter((q) => q.status !== "done").length;
   const searchRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (q.length < 2) return [];
-    return Object.values(cf.accounts)
+    return Object.values(cf.accounts ?? {})
       .filter((acc) => {
         const handle = (acc.username ?? "").toLowerCase();
         const name = (acc.displayName ?? "").toLowerCase();
@@ -166,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Meta k="accounts" v={Object.keys(cf.accounts).length} />
+              <Meta k="accounts" v={Object.keys(cf.accounts ?? {}).length} />
               <Meta k="alts" v={clusters.length} />
               <Meta k="queue" v={openQ} hot={openQ > 0} />
               {unread > 0 && <Meta k="alerts" v={unread} hot />}

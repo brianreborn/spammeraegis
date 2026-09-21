@@ -47,6 +47,6 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(rootDir, "src") },
   },
-  server: { port: 18080, host: "127.0.0.1", strictPort: true },
-  preview: { port: 18080, host: "127.0.0.1", strictPort: true },
+  server: { port: 18080, host: true, strictPort: true },
+  preview: { port: 18080, host: true, strictPort: true },
 });
