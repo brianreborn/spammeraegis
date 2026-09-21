@@ -67,7 +67,7 @@ export function GraphCanvas() {
     const fit = () => {
       const parent = canvas.parentElement;
       const w = parent?.clientWidth ?? 800;
-      const h = Math.max(420, Math.min(640, Math.floor(w * 0.62)));
+      const h = Math.max(280, Math.min(560, Math.floor(w * 0.85)));
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = w * dpr;
       canvas.height = h * dpr;

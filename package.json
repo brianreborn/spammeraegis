@@ -5,10 +5,11 @@
   "type": "module",
   "description": "Local-first X archive forensics desk. Companion to twitter-forensics.",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 18080 --host 127.0.0.1 --strictPort",
     "build": "vite build",
-    "preview": "vite preview --port 8080",
-    "test": "node --experimental-strip-types --test src/lib/altbreak/beta.test.ts"
+    "preview": "vite preview --port 18080 --host 127.0.0.1 --strictPort",
+    "test": "node --experimental-strip-types --test src/lib/altbreak/beta.test.ts src/lib/altbreak/sample-zip.test.ts",
+    "uat:note9": "powershell -NoProfile -File scripts/note9-uat.ps1"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",

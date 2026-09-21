@@ -7,7 +7,7 @@ Imported from the Grok Build conversation:
 - Conversation title: Build reusable Grok GitHub app
 - Last user cut: “Roll a full alpha, please.”
 
-The Grok sandbox preview is gone (`Session terminated`). Desk source was rebuilt from sequential `EditFile` patches in the share snapshot. Some later patches did not apply (detect, gephi, crawl-view, casefile store, field-kit popup). Canonical Firefox field kit is `extension/` from the earlier GitHub commits.
+The Grok sandbox preview is gone (`Session terminated`). Desk source was rebuilt from sequential `EditFile` patches, then completed on `agent/forensics`. Canonical Firefox field kit is `extension/`.
 
 Local snapshot of the share JSON (not committed):
 

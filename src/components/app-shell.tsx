@@ -114,7 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="border-b border-border bg-bg/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <button type="button" className="flex min-w-0 items-center gap-3 text-left" onClick={() => setView("desk")}>
             <span className="flex size-9 items-center justify-center rounded-md border border-border bg-surface">
               <Shield className="size-4 text-accent" strokeWidth={1.75} />
@@ -132,8 +132,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
             </span>
           </button>
-          <div className="hidden items-center gap-2 sm:flex">
-            <div className="relative">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-auto">
               <input
                 ref={searchRef}
                 value={query}
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }}
                 onFocus={() => setOpen(true)}
                 placeholder="Search handles"
-                className="h-9 w-44 rounded-md border border-border bg-surface px-2 font-mono text-xs"
+                className="h-11 w-full rounded-md border border-border bg-surface px-3 font-mono text-xs sm:h-9 sm:w-44"
               />
               {open && hits.length > 0 && (
                 <ul className="absolute right-0 z-20 mt-1 w-64 rounded-md border border-border bg-surface p-1">
@@ -165,10 +165,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </ul>
               )}
             </div>
-            <Meta k="accounts" v={Object.keys(cf.accounts).length} />
-            <Meta k="alts" v={clusters.length} />
-            <Meta k="queue" v={openQ} hot={openQ > 0} />
-            {unread > 0 && <Meta k="alerts" v={unread} hot />}
+            <div className="flex flex-wrap gap-2">
+              <Meta k="accounts" v={Object.keys(cf.accounts).length} />
+              <Meta k="alts" v={clusters.length} />
+              <Meta k="queue" v={openQ} hot={openQ > 0} />
+              {unread > 0 && <Meta k="alerts" v={unread} hot />}
+            </div>
           </div>
         </div>
         <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 pb-2">
